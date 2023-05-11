@@ -15,8 +15,8 @@ public class Vendedores {
     public static class Node {
 
         int Codigo;
-        int Compras;
-        int Ganancia;
+        float Compras;
+        float Ganancia;
         String Nombre;
         Node left;
         Node right;
@@ -28,6 +28,18 @@ public class Vendedores {
             this.Ganancia = 0;
             this.left = null;
             this.right = null;
+        }
+        
+        public void CruceDeCuentas (){
+            float Total = this.Ganancia - this.Compras;
+            
+            if(Total>=0){
+                this.Ganancia = Total;
+                this.Compras = 0;
+            }else{
+                this.Ganancia = 0;
+                this.Compras = (-1)*Total;
+            }
         }
     }
 
@@ -182,15 +194,14 @@ public class Vendedores {
         }
 
         public void GenerarComiciones() {
-            postorderRecursive(root, 0);
+            root = postorderRecursive(root, 0);
+            root = vaciar_comicionados(root);
         }
 
-        private float postorderRecursive(Node node, int nivel) {
-
-            float Sumatoria = 0;
+        private Node postorderRecursive(Node node, int nivel) {
 
             float multiplicador = 0;
-            if (nivel == 1) {
+            if (nivel == 0) {
                 multiplicador = (float) 0.1;
             } else {
                 multiplicador = (float) 0.01;
@@ -198,26 +209,38 @@ public class Vendedores {
 
             if (node != null && node.left != null) {
 
-                Sumatoria += postorderRecursive(node.right, nivel + 1);
-                Sumatoria += postorderRecursive(node.left, nivel + 1);
+                float Sumatoria = 0;
+                
+                Sumatoria += postorderRecursive(node.right, nivel + 1).Ganancia;
+                Sumatoria += postorderRecursive(node.left, nivel + 1).Ganancia;
+                Sumatoria += (node.right.Compras + node.left.Compras) * multiplicador;
+                
+                node.Ganancia =  Sumatoria;
 
-                System.out.println("La comision de " + node.Nombre + " es de " + Sumatoria);
+                System.out.println("La comision de " + node.Nombre + " es de " + node.Ganancia);
+                
+                
             }
-
-            if (nivel == 0) {
-                return 0;
-            }
-
-            return (node.Compras * multiplicador) + Sumatoria;
+            
+            return node;
         }
 
+        private Node vaciar_comicionados(Node node){
+            if (node != null) {
+                node.Compras = 0;
+                node.right = vaciar_comicionados(node.right);
+                node.left = vaciar_comicionados(node.left);
+            }
+            return node;
+        }
+        
         public void consoleTree(){
             printTree(this.root,"");
         }
         
         private void printTree(Node node, String prefix) {
             if (node != null) {
-                System.out.println(prefix + "|-- " + node.Nombre + " $"+ node.Compras + "  (#" + node.Codigo + ")");
+                System.out.println(prefix + "|-- " + node.Nombre + "; Compras = $" + node.Compras + "; Ganancias = $" + node.Ganancia);
                 printTree(node.right, prefix + "    ");
                 printTree(node.left, prefix + "    ");
             }
@@ -258,6 +281,10 @@ public class Vendedores {
         System.out.print("\n");
         tree.consoleTree();
         System.out.print("\n");
+        
         tree.GenerarComiciones();
+        
+        System.out.print("\n");
+        tree.consoleTree();
     }
 }
